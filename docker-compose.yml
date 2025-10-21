@@ -124,7 +124,7 @@ services:
       - "traefik.http.services.traefik-dashboard-http.loadbalancer.server.port=8080"
 
       # Router HTTP pour redirection
-      - "traefik.http.routers.traefik-dashboard-http.entrypoints=http"
+      - "traefik.http.routers.traefik-dashboard-http.entrypoints=web"
       - "traefik.http.routers.traefik-dashboard-http.rule=Host(`${TRAEFIK_DOMAIN_DASHBOARD?Variable not set}`)"
       - "traefik.http.routers.traefik-dashboard-http.middlewares=redirect-to-https@docker"
 
