@@ -32,11 +32,16 @@ services:
       - "traefik.http.routers.api.entrypoints=web"
       - "traefik.http.routers.api.rule=Host(`${TRAEFIK_DOMAIN?Variable not set}`) && PathPrefix(`/api`)"
       - "traefik.http.routers.api.middlewares=redirect-to-https@docker"
+      - "traefik.http.routers.api.tls=true"
+
+      # - "traefik.http.routers.api.entrypoints=web,websecure"
+      # - "traefik.http.routers.api.rule=Host(`${TRAEFIK_DOMAIN?Variable not set}`) && PathPrefix(`/api`)"
+      # - "traefik.http.routers.api.tls=true"
+      # - "traefik.http.services.api-service.loadbalancer.server.port=8087"
 
       # Router HTTPS sécurisé
       - "traefik.http.routers.api-secure.entrypoints=websecure"
-      - "traefik.http.routers.api-secure.rule=Host(`${TRAEFIK_DOMAIN?Variable not set}`) && Path(`/api`)"
-      - "traefik.http.routers.api-secure.tls=true"
+      - "traefik.http.routers.api-secure.rule=Host(`${TRAEFIK_DOMAIN?Variable not set}`) && PathPrefix(`/api`)"
 
       - "traefik.http.routers.api-secure.tls.certresolver=myresolver"
       - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
@@ -85,11 +90,11 @@ services:
       - "traefik.http.routers.ui.entrypoints=web"
       - "traefik.http.routers.ui.rule=Host(`${TRAEFIK_DOMAIN?Variable not set}`) && PathPrefix(`/`)"
       - "traefik.http.routers.ui.middlewares=redirect-to-https@docker"
+      - "traefik.http.routers.ui.tls=true"
 
       # Router HTTPS sécurisé
       - "traefik.http.routers.ui-secure.entrypoints=websecure"
-      - "traefik.http.routers.ui-secure.rule=Host(`${TRAEFIK_DOMAIN?Variable not set}`) && Path(`/`)"
-      - "traefik.http.routers.ui-secure.tls=true"
+      - "traefik.http.routers.ui-secure.rule=Host(`${TRAEFIK_DOMAIN?Variable not set}`) && PathPrefix(`/`)"
 
       - "traefik.http.routers.ui-secure.tls.certresolver=myresolver"
       - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
@@ -107,6 +112,11 @@ services:
       # port 80 pour HTTP et 443 pour HTTPS.
       - "--entrypoints.web.address=:80"
       - "--entrypoints.websecure.address=:443"
+
+      # Redirections
+      - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
+      - "--entryPoints.web.http.redirections.entrypoint.scheme=https"
+      - "--entrypoints.websecure.asDefault=true"
 
       # Stockage certificats
       - "--certificatesresolvers.myresolver.acme.tlschallenge=true"
