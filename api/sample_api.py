@@ -2,12 +2,14 @@ import os
 import time
 
 import asyncpg
-from quart import Quart, Response, g, jsonify, request
+from quart import Quart, Response, g, jsonify, request, Blueprint
 from quart_cors import cors  # Pour gérer les CORS
 
 app = Quart(__name__)
 app = cors(app, allow_origin="*")  # Permettre les requêtes cross-origin
 
+# Créer un Blueprint pour les routes API
+api_blueprint = Blueprint('api', __name__, url_prefix='/api')
 
 async def get_db_pool():
     if not hasattr(g, "db_pool"):
@@ -22,12 +24,12 @@ async def close_db_pool(exc):
         await pool.close()
 
 
-@app.route("/")
+@api_blueprint.route("/")
 async def home():
     return jsonify({"message": "Balloon de Oro API"})
 
 
-@app.route("/log-click/<button_id>", methods=["POST"])
+@api_blueprint.route("/log-click/<button_id>", methods=["POST"])
 async def log_click(button_id):
     pool = await get_db_pool()
     async with pool.acquire() as conn:
@@ -35,7 +37,7 @@ async def log_click(button_id):
     return jsonify({"status": "success"})
 
 
-@app.route("/clicks")
+@api_blueprint.route("/clicks")
 async def get_clicks():
     pool = await get_db_pool()
     async with pool.acquire() as conn:
@@ -52,7 +54,7 @@ async def get_clicks():
     return jsonify(clicks)
 
 
-@app.route("/stats")
+@api_blueprint.route("/stats")
 async def get_stats():
     pool = await get_db_pool()
     async with pool.acquire() as conn:
@@ -68,7 +70,7 @@ async def get_stats():
     return jsonify(stats)
 
 
-@app.route("/health")
+@api_blueprint.route("/health")
 async def health():
     try:
         # Vérifier la connexion à la base de données
@@ -79,6 +81,7 @@ async def health():
     except Exception:
         return jsonify({"status": "unhealthy"}), 500
 
+app.register_blueprint(api_blueprint)
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8087)
