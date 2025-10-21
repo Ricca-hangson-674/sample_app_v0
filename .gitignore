@@ -1,5 +1,6 @@
 .venv
 secrets/
+examples/
 .env
 
 deploy_key*
@@ -10,3 +11,5 @@ letsencrypt
 __pycache__
 
 note.txt
+
+docker-compose.local.yml
