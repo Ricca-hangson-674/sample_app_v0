@@ -6,7 +6,7 @@ services:
       dockerfile: Dockerfile
     deploy:
       mode: replicated
-      replicas: 1
+      replicas: 3
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8087/health"]
       interval: 30s
@@ -16,8 +16,8 @@ services:
     environment:
       - PYTHONUNBUFFERED=0
       - PYTHONPATH=/app
-    ports:
-      - "8087:8087"
+    # ports:
+      # - "8087:8087"
       # - "127.0.0.1:8087:8087"  # Limite l'accès à localhost
     command: >
       sh -c "export DATABASE_URL=postgresql://`cat /run/secrets/postgres_user`:`cat /run/secrets/postgres_password`@db:5432/clickdb &&
@@ -28,6 +28,10 @@ services:
     secrets:
       - postgres_password
       - postgres_user
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.api-router.rule=Host(`example.nrh674-hangson.cloud`) && PathPrefix(`/api`)"
+      - "traefik.http.services.api-service.loadbalancer.server.port=8087"
 
   db:
     image: postgres:16
@@ -58,11 +62,31 @@ services:
       timeout: 30s
       retries: 5
       start_period: 30s
-    ports:
-      - "8501:8501"
+    # ports:
+      # - "8501:8501"
       # - "127.0.0.1:8501:8501"  # Limite l'accès à localhost
     depends_on:
       - api
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.ui-router.rule=Host(`example.nrh674-hangson.cloud`) && PathPrefix(`/`)"
+      - "traefik.http.services.ui-service.loadbalancer.server.port=8501"
+      - "traefik.http.services.ui-service.loadbalancer.sticky.cookie=true"
+      - "traefik.http.services.ui-service.loadbalancer.sticky.cookie.name=web_sticky"
+  
+  reverse-ports:
+    image: traefik:v3.1
+    command: 
+     - "--api.insecure=true" # Permettre l'accès aux Dashboard de Traefik
+     - "--providers.docker"
+     - "--providers.docker.exposedByDefault=false"  
+        # Désactive l'exposition automatique des conteneur à Traefik
+    ports:
+      - "80:80"
+      - "8080:8080" # traefik dashboard
+    volumes:
+    # important car ça permet à traefik de monitorer les containers docker
+      - /var/run/docker.sock:/var/run/docker.sock 
 
 volumes:
   postgres_data:
